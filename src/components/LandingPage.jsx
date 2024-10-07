@@ -6,6 +6,7 @@ import { useInView } from 'react-intersection-observer'
 import { ArrowRight, Satellite, Map, Bell, Database, ChevronDown, Menu, X } from 'lucide-react'
 import { useNavigate } from "react-router-dom";
 
+
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const controls = useAnimation()
@@ -46,7 +47,7 @@ export default function LandingPage() {
               transition={{ duration: 0.5 }}
             >
               <Satellite className="h-6 w-6 text-white" />
-              <span className="text-xl font-semibold text-white">LandsatCompare</span>
+              <span className="text-xl font-semibold text-white">GeoSat</span>
             </motion.div>
             <nav className="hidden md:block">
               <ul className="flex space-x-8">
@@ -114,7 +115,7 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              Compare Ground Observations with Landsat Data
+              Integrate Ground Observations with Landsat Data
             </motion.h1>
             <motion.p 
               className="text-xl mb-10 max-w-2xl mx-auto text-gray-300"
@@ -122,7 +123,7 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              Define locations, get notifications, and analyze Landsat SR data with ease.
+              Pinpoint locations of interest, receive timely notifications, and conduct in-depth analyses of Landsat SR data with ease.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -139,6 +140,7 @@ export default function LandingPage() {
             </motion.div>
           </div>
         </section>
+
 
         <section id="features" className="min-h-screen py-16 px-4" ref={ref}>
           <div className="container mx-auto max-w-4xl">
@@ -183,37 +185,96 @@ export default function LandingPage() {
         </section>
 
         <section id="about" className="min-h-screen py-16 px-4 bg-gray-900">
-          <div className="container mx-auto max-w-4xl">
-            <motion.h2 
-              className="text-3xl font-bold text-center mb-12 text-white"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              About Landsat
-            </motion.h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
-              >
-                <h3 className="text-2xl font-semibold mb-4 text-white">Landsat Scene Extents (WRS-2)</h3>
-                <p className="text-gray-300">Each Landsat scene covers 185 km x 180 km, organized into paths and rows based on the WRS-2 system.</p>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                <h3 className="text-2xl font-semibold mb-4 text-white">Landsat Acquisitions</h3>
-                <p className="text-gray-300">Landsat 8 and 9 orbit at 705 km altitude, completing about 14 orbits daily, providing measurements every 8 days.</p>
-              </motion.div>
-            </div>
-          </div>
-        </section>
+  <div className="container mx-auto max-w-4xl">
+    <motion.h2 
+      className="text-3xl font-bold text-center mb-12 text-white"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+    >
+      About Landsat and Sentinel
+    </motion.h2>
 
-        <section id="use-cases" className="min-h-screen py-16 px-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      
+      {/* Landsat Scene Extents */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        <h3 className="text-2xl font-semibold mb-4 text-white">Landsat Scene Extents (WRS-2)</h3>
+        <p className="text-gray-300">
+          Each Landsat scene covers 185 km x 180 km, organized into paths and rows based on the World Reference System-2 (WRS-2).
+        </p>
+      </motion.div>
+
+      {/* Landsat Acquisitions */}
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+      >
+        <h3 className="text-2xl font-semibold mb-4 text-white">Landsat Acquisitions</h3>
+        <p className="text-gray-300">
+          Landsat 8 and 9 orbit at an altitude of 705 km, completing about 14 orbits daily. They acquire multispectral and thermal data, providing global coverage every 8 days.
+        </p>
+      </motion.div>
+
+      {/* Landsat 8 */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        <h3 className="text-2xl font-semibold mb-4 text-white">Landsat 8</h3>
+        <p className="text-gray-300">
+          Landsat 8, launched in 2013, carries two sensors: the Operational Land Imager (OLI) and the Thermal Infrared Sensor (TIRS). It provides high-quality multispectral images with 11 bands, including coastal, near-infrared, and thermal bands.
+        </p>
+      </motion.div>
+
+      {/* Landsat 9 */}
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+      >
+        <h3 className="text-2xl font-semibold mb-4 text-white">Landsat 9</h3>
+        <p className="text-gray-300">
+          Launched in 2021, Landsat 9 continues the Landsat program’s legacy. It mirrors Landsat 8's specifications and ensures continuity in global observations, improving data availability for long-term environmental monitoring.
+        </p>
+      </motion.div>
+
+      {/* Sentinel-2 Overview */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        <h3 className="text-2xl font-semibold mb-4 text-white">Sentinel-2</h3>
+        <p className="text-gray-300">
+          Sentinel-2, part of the Copernicus program by the European Space Agency, consists of two satellites: Sentinel-2A (launched in 2015) and Sentinel-2B (launched in 2017). They provide multispectral imagery with 13 bands, ranging from visible to shortwave infrared, with a 5-day revisit time at the equator.
+        </p>
+      </motion.div>
+
+      {/* Sentinel-2 Features */}
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+      >
+        <h3 className="text-2xl font-semibold mb-4 text-white">Sentinel-2 Data Features</h3>
+        <p className="text-gray-300">
+          Sentinel-2 offers 10m, 20m, and 60m spatial resolutions across different bands, making it ideal for agriculture, forest monitoring, land use studies, and disaster management. Its high revisit rate allows for continuous monitoring of Earth's surface.
+        </p>
+      </motion.div>
+
+    </div>
+  </div>
+</section>
+
+
+<section id="use-cases" className="min-h-screen py-16 px-4">
           <div className="container mx-auto max-w-4xl">
             <motion.h2 
               className="text-3xl font-bold text-center mb-12 text-white"
@@ -224,26 +285,45 @@ export default function LandingPage() {
               Landsat Data Use Cases
             </motion.h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <UseCaseCard
-                title="Environmental Monitoring"
-                description="Track changes in land use and deforestation."
-              />
-              <UseCaseCard
-                title="Agricultural Management"
-                description="Assess crop health and optimize irrigation."
-              />
-              <UseCaseCard
-                title="Disaster Response"
-                description="Rapidly assess damage from natural disasters."
-              />
-              <UseCaseCard
-                title="Climate Change Research"
-                description="Study long-term environmental changes."
-              />
+            <UseCaseCard
+    title={<a href="https://landsat.gsfc.nasa.gov/benefits/ecosystems-biodiversity/" target="_blank" rel="noopener noreferrer">Ecosystems & Biodiversity</a>}
+    description="Track changes in land use and deforestation."
+  />
+                <UseCaseCard
+    title={<a href="https://landsat.gsfc.nasa.gov/benefits/agriculture-food-security/" target="_blank" rel="noopener noreferrer">Agricultural Management</a>}
+    description="Assess crop health and optimize irrigation."
+  />
+                <UseCaseCard
+    title={<a href="https://landsat.gsfc.nasa.gov/benefits/disaster-management/" target="_blank" rel="noopener noreferrer">Disaster Response</a>}
+    description="Rapidly assess damage from natural disasters."
+  />
+               <UseCaseCard
+    title={<a href="https://landsat.gsfc.nasa.gov/benefits/climate-carbon/" target="_blank" rel="noopener noreferrer">Climate Change Research</a>}
+    description="Study long-term environmental changes."
+  />
+               
+               <UseCaseCard
+    title={<a href="https://landsat.gsfc.nasa.gov/benefits/forest-management/" target="_blank" rel="noopener noreferrer">Forest Management</a>}
+    description="Landsat continuously monitors forestation and deforestation."
+  />
+             
+             <UseCaseCard
+    title={<a href="https://landsat.gsfc.nasa.gov/benefits/rangeland-management/" target="_blank" rel="noopener noreferrer">Rangeland Management</a>}
+    description="Rangelands are areas of uncultivated land, largely characterized by grasslands."
+  />
+                <UseCaseCard
+    title={<a href="https://landsat.gsfc.nasa.gov/benefits/urban-development/" target="_blank" rel="noopener noreferrer">Urban Development</a>}
+    description="Cities are places of light, action, complex social interactions, multi-faceted cultures."
+  />
+                <UseCaseCard
+    title={<a href="https://landsat.gsfc.nasa.gov/benefits/water-resources/" target="_blank" rel="noopener noreferrer">Water Resources</a>}
+    description="Water is essential for life. A third of Earth's populace has unreliable access to clean water."
+  />
+              
+             
             </div>
           </div>
         </section>
-
         <section id="contact" className="min-h-screen py-16 px-4 bg-gray-900">
           <div className="container mx-auto max-w-4xl text-center">
             <motion.h2 
