@@ -5,6 +5,7 @@ import { motion, useAnimation } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import { ArrowRight, Satellite, Map, Bell, Database, ChevronDown, Menu, X } from 'lucide-react'
 import { useNavigate } from "react-router-dom";
+import StarBackground from '../components/particle';
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -35,6 +36,7 @@ export default function LandingPage() {
   
 
   return (
+    
     <div className="flex flex-col min-h-screen bg-black text-white font-sans">
       <header className="sticky top-0 z-10 bg-black bg-opacity-90 backdrop-blur-md border-b border-gray-800">
         <div className="container mx-auto px-4 py-4">
@@ -104,10 +106,11 @@ export default function LandingPage() {
           </motion.div>
         )}
       </header>
-
+      
       <main className="flex-grow">
         <section className="h-screen flex items-center justify-center px-4">
           <div className="container mx-auto max-w-4xl text-center">
+            <StarBackground/>
             <motion.h1 
               className="text-4xl md:text-5xl font-bold mb-6 text-white"
               initial={{ opacity: 0, y: 20 }}

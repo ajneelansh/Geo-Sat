@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landsat Data Comparison Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --background-color: #ecf0f1;
+            --card-background: #ffffff;
+            --text-color: #34495e;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 0 20px;
+        }
+        .card {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+        .grid-item {
+            aspect-ratio: 1;
+            border: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .grid-item.center {
+            border: 2px solid var(--accent-color);
+        }
+        .pixel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .pixel-value {
+            position: absolute;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            width: 100%;
+            text-align: center;
+            padding: 2px 0;
+            font-size: 10px;
+        }
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .loading {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-satellite"></i> Landsat Data Comparison Tool</h1>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>Location Selection</h2>
+            <div id="map"></div>
+            <div class="form-group">
+                <label for="coordinates">Selected Coordinates:</label>
+                <input type="text" id="coordinates" readonly>
+            </div>
+            <div class="form-group">
+                <label for="locationInput">Enter Location:</label>
+                <input type="text" id="locationInput" placeholder="City, Country or Latitude, Longitude">
+            </div>
+            <button onclick="getLocation()">Locate</button>
+            <div class="form-group">
+                <label for="cloudCover">Maximum Cloud Cover (%):</label>
+                <input type="range" id="cloudCover" min="0" max="100" value="15">
+                <span id="cloudCoverValue">15%</span>
+            </div>
+            <div class="form-group">
+                <label for="timespan">Time Span:</label>
+                <select id="timespan">
+                    <option value="recent">Most Recent</option>
+                    <option value="week">Past Week</option>
+                    <option value="month">Past Month</option>
+                    <option value="year">Past Year</option>
+                </select>
+            </div>
+            <button onclick="updateData()">Update Data</button>
+        </div>
+
+        <div class="card">
+            <h2>Landsat Data Analysis</h2>
+            <div id="metadata">
+                <p><strong>WRS Path/Row:</strong> <span id="wrsInfo">---</span></p>
+                <p><strong>Acquisition Date:</strong> <span id="acqDate">---</span></p>
+                <p><strong>Cloud Cover:</strong> <span id="cloudPercent">---</span></p>
+                <p><strong>Satellite:</strong> <span id="satellite">---</span></p>
+            </div>
+            
+            <div class="form-group">
+                <label for="bandSelector">Display Band:</label>
+                <select id="bandSelector" onchange="updatePixelGrid()">
+                    <option value="natural">Natural Color</option>
+                    <option value="ndvi">NDVI</option>
+                    <option value="swir">SWIR</option>
+                </select>
+            </div>
+
+            <h3>Pixel Grid (3x3)</h3>
+            <div class="grid-container" id="pixelGrid"></div>
+            
+            <div class="loading" id="loadingIndicator">
+                <div class="loading-spinner"></div>
+            </div>
+
+            <h3>Spectral Signature</h3>
+            <canvas id="spectralChart"></canvas>
+            
+            <button onclick="downloadData()" style="margin-top: 20px;">
+                Download Data (CSV)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize map
+        const map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let marker;
+        map.on('click', function(e) {
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            marker = L.marker(e.latlng).addTo(map);
+            document.getElementById('coordinates').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+            getLocationDetails(e.latlng.lat, e.latlng.lng);
+        });
+
+        // Cloud cover slider
+        document.getElementById('cloudCover').addEventListener('input', function(e) {
+            document.getElementById('cloudCoverValue').textContent = `${e.target.value}%`;
+        });
+
+        // Sample data for different bands
+        const samplePixelData = {
+            natural: Array(9).fill().map(() => ({
+                url: '/api/placeholder/100/100',
+                value: '0.15, 0.18, 0.12'
+            })),
+            ndvi: Array(9).fill().map(() => ({
+                url: '/api/placeholder/100/100',
+                value: '0.45'
+            })),
+            swir: Array(9).fill().map(() => ({
+                url: '/api/placeholder/100/100',
+                value: '0.10'
+            })),
+        };
+
+        // Function to get location from input
+        function getLocation() {
+            const locationInput = document.getElementById('locationInput').value;
+            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(locationInput)}&format=json&addressdetails=1`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        const firstResult = data[0];
+                        const lat = firstResult.lat;
+                        const lon = firstResult.lon;
+
+                        // Move the map to the new location
+                        map.setView([lat, lon], 13);
+                        if (marker) {
+                            map.removeLayer(marker);
+                        }
+                        marker = L.marker([lat, lon]).addTo(map);
+                        document.getElementById('coordinates').value = `${lat}, ${lon}`;
+                        getLocationDetails(lat, lon);
+                    } else {
+                        alert('Location not found. Please try again.');
+                    }
+                })
+                .catch(error => console.error('Error fetching location:', error));
+        }
+
+        // Function to get details of the location from coordinates
+        function getLocationDetails(lat, lon) {
+            const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const locationDetails = data.address;
+                    const locationInfo = `
+                        Country: ${locationDetails.country || 'N/A'}, 
+                        State: ${locationDetails.state || 'N/A'}, 
+                        City: ${locationDetails.city || locationDetails.town || 'N/A'}, 
+                        Street: ${locationDetails.road || 'N/A'}
+                    `;
+                    document.getElementById('locationInfo').textContent = locationInfo;
+                    document.getElementById('locationDetails').style.display = 'block';
+                })
+                .catch(error => console.error('Error fetching location details:', error));
+        }
+
+
+        // Enhanced metadata generation function
+function generateSceneMetadata(lat, lon) {
+    // Landsat 8-9 specific parameters
+    const satellites = [
+        {name: 'Landsat 8', id: 'LC08'},
+        {name: 'Landsat 9', id: 'LC09'}
+    ];
+    const selectedSatellite = satellites[Math.floor(Math.random() * satellites.length)];
+    
+    // Generate WRS Path/Row based on lat/lon
+    // This is a simplified approximation
+    const path = Math.floor((180 + parseFloat(lon)) / 360 * 233) + 1;
+    const row = Math.floor((82.5 - parseFloat(lat)) / 165 * 248) + 1;
+    
+    // Generate a random recent date
+    const currentDate = new Date();
+    const pastDate = new Date(currentDate.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000);
+    const acquisitionDate = pastDate.toISOString().split('T')[0];
+    
+    // Generate scene time (always during day for optical imagery)
+    const hours = Math.floor(Math.random() * 4) + 9; // 9 AM to 1 PM
+    const minutes = Math.floor(Math.random() * 60);
+    const acquisitionTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    
+    // Generate cloud cover (weighted towards lower values)
+    const cloudCover = (Math.random() * Math.random() * 100).toFixed(2);
+    
+    // Quality scores
+    const qualityScores = {
+        geometric: Math.floor(Math.random() * 3) + 8, // 8-10
+        radiometric: Math.floor(Math.random() * 3) + 8, // 8-10
+        atmospheric: Math.floor(Math.random() * 3) + 8 // 8-10
+    };
+    
+    // Combine all metadata
+    return {
+        satellite: selectedSatellite.name,
+        satelliteId: selectedSatellite.id,
+        wrsPath: path,
+        wrsRow: row,
+        acquisitionDate: acquisitionDate,
+        acquisitionTime: acquisitionTime,
+        cloudCover: cloudCover,
+        qualityScores: qualityScores,
+        sceneCenterCoordinates: {
+            latitude: parseFloat(lat).toFixed(6),
+            longitude: parseFloat(lon).toFixed(6)
+        }
+    };
+}
+
+        function updateData() {
+            const coordinates = document.getElementById('coordinates').value.split(',').map(coord => coord.trim());
+            if (coordinates.length !== 2) {
+                alert('Please select a location on the map or enter valid coordinates.');
+                return;
+            }
+            const lat = parseFloat(coordinates[0]);
+            const lon = parseFloat(coordinates[1]);
+        
+            // Show loading indicator
+            document.getElementById('loadingIndicator').style.display = 'flex';
+        
+            // Simulate fetching data
+            setTimeout(() => {
+                const metadata = generateSceneMetadata(lat, lon);
+                
+                // Update UI with metadata
+                document.getElementById('wrsInfo').textContent = `Path: ${metadata.wrsPath}, Row: ${metadata.wrsRow}`;
+                document.getElementById('acqDate').textContent = `${metadata.acquisitionDate} ${metadata.acquisitionTime}`;
+                document.getElementById('cloudPercent').textContent = `${metadata.cloudCover}%`;
+                document.getElementById('satellite').textContent = `${metadata.satellite} (${metadata.satelliteId})`;
+                
+                // Add quality scores to UI
+                const metadataDiv = document.getElementById('metadata');
+                const qualityHTML = `
+                    <p><strong>Quality Scores:</strong></p>
+                    <ul style="margin-top: 5px; padding-left: 20px;">
+                        <li>Geometric: ${metadata.qualityScores.geometric}/10</li>
+                        <li>Radiometric: ${metadata.qualityScores.radiometric}/10</li>
+                        <li>Atmospheric: ${metadata.qualityScores.atmospheric}/10</li>
+                    </ul>
+                `;
+                
+                // Check if quality scores section already exists
+                const existingQuality = metadataDiv.querySelector('ul');
+                if (existingQuality) {
+                    existingQuality.parentElement.innerHTML = qualityHTML;
+                } else {
+                    metadataDiv.insertAdjacentHTML('beforeend', qualityHTML);
+                }
+        
+                // Update pixel grid and chart
+                updatePixelGrid();
+                updateChart();
+        
+                // Hide loading indicator
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }, 2000);
+        }
+        function updatePixelGrid() {
+            const selectedBand = document.getElementById('bandSelector').value;
+            const pixelData = samplePixelData[selectedBand];
+            const pixelGrid = document.getElementById('pixelGrid');
+            pixelGrid.innerHTML = '';
+
+            pixelData.forEach((pixel, index) => {
+                const gridItem = document.createElement('div');
+                gridItem.classList.add('grid-item');
+                gridItem.innerHTML = `
+                    <img src="${pixel.url}" class="pixel-image" alt="Pixel Image">
+                    <div class="pixel-value">${pixel.value}</div>
+                `;
+                pixelGrid.appendChild(gridItem);
+            });
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('spectralChart').getContext('2d');
+            const labels = ['Band 1', 'Band 2', 'Band 3', 'Band 4', 'Band 5', 'Band 6', 'Band 7', 'Band 8'];
+            const data = {
+                labels: labels,
+                datasets: [{
+                    label: 'Spectral Response',
+                    data: labels.map(() => Math.random()), // Random data for demo purposes
+                    backgroundColor: 'rgba(52, 152, 219, 0.5)',
+                    borderColor: 'rgba(52, 152, 219, 1)',
+                    borderWidth: 1,
+                }]
+            };
+
+            const config = {
+                type: 'bar',
+                data: data,
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            };
+
+            new Chart(ctx, config);
+        }
+
+       // Add this function after the existing JavaScript code
+
+       function downloadData() {
+        const coordinates = document.getElementById('coordinates').value.split(',').map(coord => coord.trim());
+        const metadata = generateSceneMetadata(coordinates[0], coordinates[1]);
+        const selectedBand = document.getElementById('bandSelector').value;
+    
+        // Enhanced headers for CSV
+        const headers = [
+            'Scene ID',
+            'Satellite',
+            'WRS Path',
+            'WRS Row',
+            'Acquisition Date',
+            'Acquisition Time',
+            'Cloud Cover (%)',
+            'Center Latitude',
+            'Center Longitude',
+            'Band Type',
+            'Geometric Quality',
+            'Radiometric Quality',
+            'Atmospheric Quality',
+            'Pixel_1',
+            'Pixel_2',
+            'Pixel_3',
+            'Pixel_4',
+            'Pixel_5 (Center)',
+            'Pixel_6',
+            'Pixel_7',
+            'Pixel_8',
+            'Pixel_9'
+        ];
+    
+        // Generate sample pixel values
+        let pixelValues;
+        switch(selectedBand) {
+            case 'natural':
+                pixelValues = Array(9).fill().map(() => 
+                    `"${(Math.random() * 0.3).toFixed(3)}, ${(Math.random() * 0.3).toFixed(3)}, ${(Math.random() * 0.3).toFixed(3)}"`
+                );
+                break;
+            case 'ndvi':
+                pixelValues = Array(9).fill().map(() => 
+                    (Math.random() * 0.8 - 0.2).toFixed(3)
+                );
+                break;
+            case 'swir':
+                pixelValues = Array(9).fill().map(() => 
+                    (Math.random() * 0.5).toFixed(3)
+                );
+                break;
+        }
+    
+        // Create scene ID
+        const sceneId = `${metadata.satelliteId}_${metadata.wrsPath.toString().padStart(3, '0')}${metadata.wrsRow.toString().padStart(3, '0')}_${metadata.acquisitionDate.replace(/-/g, '')}`;
+    
+        // Create data row
+        const dataRow = [
+            sceneId,
+            metadata.satellite,
+            metadata.wrsPath,
+            metadata.wrsRow,
+            metadata.acquisitionDate,
+            metadata.acquisitionTime,
+            metadata.cloudCover,
+            metadata.sceneCenterCoordinates.latitude,
+            metadata.sceneCenterCoordinates.longitude,
+            selectedBand,
+            metadata.qualityScores.geometric,
+            metadata.qualityScores.radiometric,
+            metadata.qualityScores.atmospheric,
+            ...pixelValues
+        ];
+    
+        // Combine headers and data
+        const csvContent = [
+            headers.join(','),
+            dataRow.join(',')
+        ].join('\n');
+    
+        // Create and trigger download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (navigator.msSaveBlob) { // IE 10+
+            navigator.msSaveBlob(blob, `${sceneId}_data.csv`);
+        } else {
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', `${sceneId}_data.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+    </script>
+</body>
+</html>
