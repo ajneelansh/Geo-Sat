@@ -192,7 +192,7 @@ const [showImages, setShowImages] = useState(false);
                 </div>
               </div>
               <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Quality Scores:</h3>
+                <h3 className="text-lg font-semibold mb-2">Quality Scores+></h3>
                 <ul className="list-disc list-inside">
                   <li>Geometric: {metadata.qualityScores.geometric}/10</li>
                   <li>Radiometric: {metadata.qualityScores.radiometric}/10</li>
