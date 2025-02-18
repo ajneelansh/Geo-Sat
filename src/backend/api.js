@@ -1,14 +1,8 @@
 import axios from 'axios';
 
 const BASE_URL = 'https://m2m.cr.usgs.gov/api/api/json/stable/';
-const API_KEY = 'hDjTmYVcCc_mvCA_tD80qDDTxqN17Xnhq!qK1fJEwAw78L0c!2xC2VwCWJuctrvI';
 
 export const searchLandsatImages = async (longitude, latitude) => {
-  try {
-    const loginPayload = {
-      username: 'adiviking',
-      password: 'Viking@1927#', 
-    };
     const loginResponse = await axios.post(`${BASE_URL}login`, loginPayload);
     const token = loginResponse.data.data;
     const searchPayload = {
